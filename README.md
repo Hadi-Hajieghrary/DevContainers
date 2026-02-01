@@ -1,1 +1,89 @@
-## Read Me...
+# DevContainers Repository
+
+This repository contains production-ready DevContainer configurations optimized for GPU-accelerated development workflows.
+
+## MuJoCo Branch - Physics Simulation & Deep Learning Environment
+
+The `Mujoco` branch provides a comprehensive DevContainer for GPU-accelerated physics simulation and deep learning development.
+
+### Features
+
+**Core Frameworks:**
+- **MuJoCo 3.4.0** - Multi-Joint dynamics with Contact physics simulation
+- **PyTorch 2.6.0+** - Deep learning with CUDA 12.4 support
+- **OpenCV, NumPy, SciPy, Matplotlib** - Scientific computing stack
+
+**Environment Configuration:**
+- **Base:** Ubuntu 22.04 + NVIDIA CUDA 12.4.1
+- **GPU Support:** Full NVIDIA GPU passthrough with X11 forwarding
+- **Python:** Dedicated virtual environment at `/home/vscode/.venv`
+- **Shell:** Bash with automatic venv activation
+
+**Development Tools:**
+- VS Code extensions: Python, Pylance, Jupyter, GitHub Copilot, GitLens, Autodocstring
+- GitHub CLI for repository operations
+- Black code formatter (88-character line length)
+- SSH key mounting for secure Git operations
+
+### Quick Start
+
+1. Clone this repository
+2. Switch to the `Mujoco` branch: `git checkout Mujoco`
+3. Open in VS Code with Dev Containers extension
+4. Rebuild container when prompted
+5. Wait for automatic package verification
+
+### Testing Installation
+
+```bash
+# Test PyTorch and GPU support
+python scripts/test_pytorch_instalation.py
+
+# Test MuJoCo (headless rendering)
+python scripts/test_mujoco_instalation.py --headless
+
+# Test MuJoCo (interactive GUI - requires X11)
+python scripts/test_mujoco_instalation.py
+```
+
+### Prerequisites
+
+- Docker with NVIDIA GPU support (nvidia-container-toolkit)
+- NVIDIA drivers compatible with CUDA 12.4.1
+- X11 server for GUI applications
+- VS Code with Dev Containers extension
+- NVIDIA GPU with CUDA support
+- 4GB+ RAM recommended
+
+### Container Details
+
+**Installed Python Packages:**
+- torch, torchvision, torchaudio (CUDA 12.4)
+- mujoco==3.4.0
+- glfw
+- numpy, scipy, matplotlib
+- opencv-python
+
+**Configuration Files:**
+- `.devcontainer/Dockerfile` - Container build instructions
+- `.devcontainer/devcontainer.json` - VS Code integration & GPU settings
+- `.devcontainer/postCreateCommand.sh` - Automatic package verification
+- `.devcontainer/README.md` - Detailed documentation
+
+**GPU Configuration:**
+- 2GB shared memory allocation
+- IPC host mode for optimal performance
+- GLFW backend for MuJoCo rendering
+- NVIDIA driver capabilities: compute, utility, graphics, display
+
+### Virtual Environment
+
+The Python virtual environment is automatically activated in all new terminal sessions. The environment is located at `/home/vscode/.venv` and includes all pre-installed packages.
+
+### Documentation
+
+For comprehensive setup instructions, troubleshooting, and customization options, see [.devcontainer/README.md](.devcontainer/README.md) in the `Mujoco` branch.
+
+## License
+
+This DevContainer configuration is provided as-is for development purposes. Check individual package licenses for usage restrictions.

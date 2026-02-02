@@ -19,6 +19,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-venv \
     python3-dev \
     openssh-client \
+    # C++ build tools
+    cmake \
+    ninja-build \
+    clang \
+    gdb \
+    lldb \
     # X11 + OpenGL + GUI deps for Drake visualization
     libgl1 \
     libgl1-mesa-dri \
@@ -54,6 +60,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libasound2 \
     libgbm1 \
+    # Drake C++ dependencies
+    libeigen3-dev \
+    libfmt-dev \
+    libspdlog-dev \
+    libopengl-dev \
+    libmumps-seq-dev \
  && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
@@ -65,6 +77,23 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
  && apt-get update \
  && apt-get install -y gh \
  && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------
+# Install Drake C++ binary
+# -----------------------------
+ARG DRAKE_VERSION=1.25.0
+RUN cd /tmp \
+ && wget -q https://github.com/RobotLocomotion/drake/releases/download/v${DRAKE_VERSION}/drake-${DRAKE_VERSION}-jammy.tar.gz \
+ && tar -xzf drake-${DRAKE_VERSION}-jammy.tar.gz -C /opt \
+ && rm drake-${DRAKE_VERSION}-jammy.tar.gz \
+ # Run Drake's install_prereqs script to install remaining dependencies
+ && yes | /opt/drake/share/drake/setup/install_prereqs -y || true \
+ && rm -rf /var/lib/apt/lists/*
+
+# Set Drake environment variables
+ENV CMAKE_PREFIX_PATH="/opt/drake:${CMAKE_PREFIX_PATH}"
+ENV LD_LIBRARY_PATH="/opt/drake/lib:${LD_LIBRARY_PATH}"
+ENV PATH="/opt/drake/bin:${PATH}"
 
 # -----------------------------
 # Create non-root user (Standard DevContainer practice)

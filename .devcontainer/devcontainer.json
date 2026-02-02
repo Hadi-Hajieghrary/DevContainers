@@ -52,7 +52,11 @@
         "GitHub.vscode-pull-request-github",
         "GitHub.copilot-chat",
         "eamodio.gitlens",
-        "njpwerner.autodocstring"
+        "njpwerner.autodocstring",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "twxs.cmake"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python",
@@ -64,7 +68,12 @@
         ],
         "editor.bracketPairColorization.enabled": true,
         "terminal.integrated.defaultProfile.linux": "bash",
-        "files.trimTrailingWhitespace": true
+        "files.trimTrailingWhitespace": true,
+        "cmake.configureOnOpen": true,
+        "cmake.generator": "Ninja",
+        "cmake.configureSettings": {
+          "CMAKE_PREFIX_PATH": "/opt/drake"
+        }
       }
     }
   },

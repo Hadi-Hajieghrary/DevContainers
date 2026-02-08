@@ -79,6 +79,13 @@ Run the MPC example:
 python scripts/example_sqp_mpc.py
 ```
 
+Run the City Planning simulation (Complex Highway/Ramp/Roundabout):
+```bash
+python scripts/city_planning_sim.py
+```
+*Features: Highway, Exit Ramp, Roundabout, Goal, Obstacles, IDM Collision Avoidance.*
+
+
 ## Troubleshooting
 
 - **GPU Issues**: Ensure NVIDIA drivers and container toolkit are installed

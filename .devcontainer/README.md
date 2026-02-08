@@ -1,211 +1,224 @@
-# Waymax + SQP-Based Rulebook MPC DevContainer
+# DevContainers Repository
 
-This DevContainer provides a complete development environment for implementing **Weighted SQP-Based Rulebook MPC** for autonomous vehicle planning.
+This repository contains production-ready DevContainer configurations optimized for GPU-accelerated development workflows.
 
-## Overview
+## Available Branches
 
-The container includes:
-- **Waymax**: Waymo's lightweight simulator for behavior planning research
-- **JAX + CUDA**: GPU-accelerated numerical computing
-- **Optimization Stack**: CasADi, CVXPY, OSQP, and more for SQP/MPC
-- **Control Libraries**: python-control, do-mpc
+| Branch | Description | Simulation Framework |
+|--------|-------------|---------------------|
+| `main` | Waymax + SQP-Based Rulebook MPC | Waymax (Waymo) |
+| `Mujoco` | Physics simulation with MuJoCo | MuJoCo 3.4.0 |
+| `Drake` | Robotics simulation with Drake | Drake (MIT) |
 
-## Prerequisites
+---
 
-- Docker with NVIDIA GPU support (`nvidia-container-toolkit`)
-- NVIDIA drivers compatible with CUDA 12.4.1
-- VS Code with Dev Containers extension
-- NVIDIA GPU with CUDA support (recommended: 8GB+ VRAM)
-- 16GB+ RAM recommended
+## Waymax Branch (main) - SQP-Based Rulebook MPC Development
 
-## Quick Start
+The `main` branch provides a comprehensive DevContainer for developing **Weighted SQP-Based Rulebook MPC** for autonomous vehicle planning using Waymax.
 
-1. **Open in VS Code**: Open the repository folder in VS Code
-2. **Reopen in Container**: Press `F1` → "Dev Containers: Reopen in Container"
-3. **Wait for Build**: First build takes 10-15 minutes (downloading CUDA, JAX, etc.)
-4. **Verify Installation**: Run `python scripts/test_waymax_installation.py`
+### Features
 
-## Container Structure
+**Core Frameworks:**
+- **Waymax** - Waymo's lightweight simulator for autonomous driving research
+- **JAX** - High-performance numerical computing with GPU acceleration
+- **CasADi** - Symbolic framework for automatic differentiation and optimal control
+- **CVXPY + OSQP** - Convex optimization and fast QP solvers
+- **TensorFlow** - Required for Waymo Open Dataset
+
+**Optimization Stack (for SQP/MPC):**
+- CasADi with multiple solver backends
+- CVXPY with 15+ solver options
+- OSQP, ECOS, Clarabel, ProxSuite QP solvers
+- SciPy SLSQP for nonlinear optimization
+- do-mpc for Model Predictive Control
+- python-control for control systems analysis
+
+**Environment Configuration:**
+- **Base:** Ubuntu 22.04 + NVIDIA CUDA 12.4.1
+- **GPU Support:** Full NVIDIA GPU passthrough for JAX acceleration
+- **Python:** 3.11 with dedicated virtual environment at `/home/vscode/.venv`
+- **Shell:** Bash with automatic venv activation
+
+**Development Tools:**
+- VS Code extensions: Python, Pylance, Jupyter, GitHub Copilot, LaTeX Workshop
+- Black code formatter (88-character line length)
+- Jupyter notebooks for interactive development
+- SSH key mounting for secure Git operations
+
+### Quick Start
+
+1. Clone this repository
+2. Open in VS Code with Dev Containers extension
+3. Rebuild container when prompted
+4. Wait for automatic package verification
+
+### Testing Installation
+
+```bash
+# Comprehensive installation test
+python scripts/test_waymax_installation.py
+
+# Run example SQP-MPC demo
+python scripts/example_sqp_mpc.py
+```
+
+### Project Structure for Rulebook MPC Development
 
 ```
-.devcontainer/
-├── Dockerfile           # Multi-stage build with CUDA + Python + packages
-├── devcontainer.json    # VS Code settings, extensions, mounts
-├── requirements.txt     # Python packages for optimization/control
-├── post-create.sh       # Post-build verification script
-└── README.md            # This file
+.
+├── .devcontainer/           # DevContainer configuration
+│   ├── Dockerfile           # Container build instructions
+│   ├── devcontainer.json    # VS Code configuration
+│   ├── requirements.txt     # Python dependencies
+│   └── post-create.sh       # Post-creation setup script
+├── scripts/
+│   ├── test_waymax_installation.py  # Installation verification
+│   └── example_sqp_mpc.py           # Example MPC implementation
+└── References/              # Research documentation
+    ├── ref/                 # Paper LaTeX sources
+    ├── sim/                 # Highway traffic simulator
+    └── sqp/                 # SQP algorithm notes
 ```
 
-## GPU Configuration
+### Key Dependencies for Rulebook MPC
 
-The container is configured for full GPU access:
-
-```json
-"runArgs": [
-    "--gpus", "all",
-    "--ipc=host",
-    "--shm-size=4g"
-]
-```
-
-JAX memory settings (adjustable in `devcontainer.json`):
-- `XLA_PYTHON_CLIENT_PREALLOCATE=false`: Dynamic memory allocation
-- `XLA_PYTHON_CLIENT_MEM_FRACTION=0.75`: Use 75% of GPU memory max
-
-## Installed Packages
-
-### Core Simulation
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `waymax` | latest | Waymo's AV planning simulator |
-| `jax[cuda12]` | latest | GPU-accelerated computing |
-| `tensorflow` | 2.15.0 | Waymo Open Dataset support |
-
-### Optimization (SQP/MPC)
 | Package | Purpose |
 |---------|---------|
-| `casadi` | Symbolic optimal control, auto-diff |
+| `waymax` | Waymo's simulator with real-world driving scenarios |
+| `jax` | Hardware-accelerated numerical computing |
+| `casadi` | Symbolic MPC formulation and automatic differentiation |
 | `cvxpy` | Convex optimization modeling |
-| `osqp` | Fast QP solver (embedded-friendly) |
-| `clarabel` | Interior-point conic solver |
-| `proxsuite` | Proximal QP solver |
-| `qpsolvers` | Unified QP interface |
-
-### Control
-| Package | Purpose |
-|---------|---------|
-| `python-control` | LQR, state-space, transfer functions |
+| `osqp` | Fast embedded QP solver |
+| `python-control` | LQR, pole placement, state-space analysis |
 | `do-mpc` | High-level MPC framework |
 
-## Development Workflow
+### Downloading Waymo Open Dataset
 
-### 1. Formulating MPC Problems with CasADi
-
-```python
-import casadi as ca
-
-# Symbolic variables
-x = ca.SX.sym('x', 4)  # State
-u = ca.SX.sym('u', 2)  # Control
-
-# Dynamics (kinematic bicycle)
-x_next = f(x, u)
-
-# Cost function
-cost = ca.mtimes([x.T, Q, x]) + ca.mtimes([u.T, R, u])
-
-# NLP formulation
-nlp = {'x': ca.vertcat(x, u), 'f': cost, 'g': constraints}
-solver = ca.nlpsol('mpc', 'ipopt', nlp)
-```
-
-### 2. Using Waymax for Scenario Simulation
-
-```python
-import waymax
-from waymax import config as waymax_config
-
-# Load scenario from Waymo Open Dataset
-config = waymax_config.WaymaxConfig(...)
-
-# Run simulation with your MPC controller
-for step in range(horizon):
-    action = mpc_controller.solve(state)
-    state = waymax.step(state, action)
-```
-
-### 3. Solving QPs with OSQP
-
-```python
-import osqp
-import numpy as np
-from scipy import sparse
-
-# QP: min 0.5 x'Px + q'x s.t. l <= Ax <= u
-P = sparse.csc_matrix(...)
-q = np.array(...)
-A = sparse.csc_matrix(...)
-
-solver = osqp.OSQP()
-solver.setup(P, q, A, l, u, verbose=False)
-result = solver.solve()
-```
-
-## Troubleshooting
-
-### JAX not detecting GPU
+To use Waymax with real driving scenarios:
 
 ```bash
-# Check CUDA visibility
-nvidia-smi
+# Install gsutil
+pip install gsutil
 
-# Verify JAX devices
-python -c "import jax; print(jax.devices())"
+# Download sample scenarios (requires Google Cloud account)
+gsutil -m cp -r gs://waymo_open_dataset_motion_v_1_2_0/scenario/training.tfrecord-* ./data/
 ```
 
-If only CPU is detected:
-1. Ensure `nvidia-container-toolkit` is installed on host
-2. Verify Docker has GPU access: `docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi`
-3. Rebuild container
+See [Waymax documentation](https://waymo-research.github.io/waymax/) for detailed instructions.
 
-### Import errors for Waymax
+---
 
-Waymax requires TensorFlow for dataset loading:
+## Drake Branch - Robotics Simulation & Planning Environment
+
+The `Drake` branch provides a comprehensive DevContainer for GPU-accelerated robotics simulation, planning, and control development.
+
+### Features
+
+**Core Frameworks:**
+- **Drake** - MIT's robotics toolkit for simulation, planning, and control
+- **PyTorch 2.6.0+** - Deep learning with CUDA 12.4 support
+- **Meshcat** - Web-based 3D visualization
+- **OpenCV, NumPy, SciPy, Matplotlib** - Scientific computing stack
+
+**Environment Configuration:**
+- **Base:** Ubuntu 22.04 + NVIDIA CUDA 12.4.1
+- **GPU Support:** Full NVIDIA GPU passthrough with X11 forwarding
+- **Python:** Dedicated virtual environment at `/home/vscode/.venv`
+- **Shell:** Bash with automatic venv activation
+
+**Development Tools:**
+- VS Code extensions: Python, Pylance, Jupyter, GitHub Copilot, GitLens, Autodocstring
+- GitHub CLI for repository operations
+- Black code formatter (88-character line length)
+- SSH key mounting for secure Git operations
+
+### Quick Start
+
+1. Clone this repository
+2. Switch to the `Drake` branch: `git checkout Drake`
+3. Open in VS Code with Dev Containers extension
+4. Rebuild container when prompted
+5. Wait for automatic package verification
+
+### Testing Installation
+
 ```bash
-pip install waymo-open-dataset-tf-2-12-0
+# Test PyTorch and GPU support
+python scripts/test_pytorch_instalation.py
+
+# Test Drake installation
+python scripts/test_drake_instalation.py
 ```
 
-### OSQP solver failures
+---
 
-For numerically challenging QPs:
-```python
-solver.setup(P, q, A, l, u,
-    eps_abs=1e-5,
-    eps_rel=1e-5,
-    max_iter=10000,
-    polish=True
-)
-```
+## MuJoCo Branch - Physics Simulation & Deep Learning Environment
 
-### Memory issues
+The `Mujoco` branch provides a comprehensive DevContainer for GPU-accelerated physics simulation and deep learning development.
 
-Reduce JAX memory fraction:
+### Features
+
+**Core Frameworks:**
+- **MuJoCo 3.4.0** - Multi-Joint dynamics with Contact physics simulation
+- **PyTorch 2.6.0+** - Deep learning with CUDA 12.4 support
+- **OpenCV, NumPy, SciPy, Matplotlib** - Scientific computing stack
+
+**Environment Configuration:**
+- **Base:** Ubuntu 22.04 + NVIDIA CUDA 12.4.1
+- **GPU Support:** Full NVIDIA GPU passthrough with X11 forwarding
+- **Python:** Dedicated virtual environment at `/home/vscode/.venv`
+- **Shell:** Bash with automatic venv activation
+
+**Development Tools:**
+- VS Code extensions: Python, Pylance, Jupyter, GitHub Copilot, GitLens, Autodocstring
+- GitHub CLI for repository operations
+- Black code formatter (88-character line length)
+- SSH key mounting for secure Git operations
+
+### Quick Start
+
+1. Clone this repository
+2. Switch to the `Mujoco` branch: `git checkout Mujoco`
+3. Open in VS Code with Dev Containers extension
+4. Rebuild container when prompted
+5. Wait for automatic package verification
+
+### Testing Installation
+
 ```bash
-export XLA_PYTHON_CLIENT_MEM_FRACTION=0.5
+# Test PyTorch and GPU support
+python scripts/test_pytorch_instalation.py
+
+# Test MuJoCo (headless rendering)
+python scripts/test_mujoco_instalation.py --headless
+
+# Test MuJoCo (interactive GUI - requires X11)
+python scripts/test_mujoco_instalation.py
 ```
 
-## Customization
+---
 
-### Adding packages
+## Common Prerequisites
 
-Edit `requirements.txt` and rebuild:
-```bash
-pip install -r .devcontainer/requirements.txt
-```
+- Docker with NVIDIA GPU support (nvidia-container-toolkit)
+- NVIDIA drivers compatible with CUDA 12.4.1
+- X11 server for GUI applications
+- VS Code with Dev Containers extension
+- NVIDIA GPU with CUDA support
+- 4GB+ RAM recommended (8GB+ for Drake)
 
-### Changing CUDA version
+## Container Configuration
 
-Modify the base image in `Dockerfile`:
-```dockerfile
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
-```
+All branches share similar GPU configuration:
+- 2GB shared memory allocation
+- IPC host mode for optimal performance
+- NVIDIA driver capabilities: compute, utility, graphics, display
+- Automatic virtual environment activation
 
-### VS Code extensions
+### Documentation
 
-Add to `devcontainer.json`:
-```json
-"customizations": {
-    "vscode": {
-        "extensions": [
-            "your.extension-id"
-        ]
-    }
-}
-```
+For comprehensive setup instructions, troubleshooting, and customization options, see `.devcontainer/README.md` in each branch.
 
-## References
+## License
 
-- [Waymax Documentation](https://waymo-research.github.io/waymax/)
-- [CasADi Documentation](https://web.casadi.org/docs/)
-- [OSQP Documentation](https://osqp.org/docs/)
-- [JAX Documentation](https://jax.readthedocs.io/)
+This DevContainer configuration is provided as-is for development purposes. Check individual package licenses for usage restrictions.

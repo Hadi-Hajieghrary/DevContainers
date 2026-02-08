@@ -1,0 +1,148 @@
+{
+    "name": "Waymax-SQP-MPC",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
+
+    // Container runtime configuration
+    "runArgs": [
+        "--gpus", "all",
+        "--ipc=host",
+        "--shm-size=4g",
+        "--ulimit", "memlock=-1",
+        "--ulimit", "stack=67108864"
+    ],
+
+    // Environment variables
+    "containerEnv": {
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "NVIDIA_DRIVER_CAPABILITIES": "compute,utility,graphics,display",
+        "XLA_PYTHON_CLIENT_PREALLOCATE": "false",
+        "XLA_PYTHON_CLIENT_MEM_FRACTION": "0.75",
+        "TF_CPP_MIN_LOG_LEVEL": "2",
+        "MPLBACKEND": "Agg"
+    },
+
+    // Mount configurations
+    "mounts": [
+        // X11 socket for GUI applications
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+        // SSH keys for git operations
+        "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,readonly",
+        // Git configuration
+        "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly"
+    ],
+
+    // VS Code customizations
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // Python development
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "ms-python.isort",
+
+                // Jupyter notebooks
+                "ms-toolsai.jupyter",
+                "ms-toolsai.jupyter-keymap",
+                "ms-toolsai.jupyter-renderers",
+
+                // AI assistants
+                "github.copilot",
+                "github.copilot-chat",
+
+                // Git and collaboration
+                "eamodio.gitlens",
+                "github.vscode-pull-request-github",
+
+                // Code quality
+                "njpwerner.autodocstring",
+                "usernamehw.errorlens",
+                "streetsidesoftware.code-spell-checker",
+
+                // Visualization and data
+                "randomfractalsinc.vscode-data-preview",
+                "GrapeCity.gc-excelviewer",
+
+                // LaTeX (for paper writing)
+                "james-yu.latex-workshop",
+
+                // Utilities
+                "christian-kohler.path-intellisense",
+                "redhat.vscode-yaml",
+                "tamasfe.even-better-toml"
+            ],
+            "settings": {
+                // Python configuration
+                "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python",
+                "python.terminal.activateEnvironment": true,
+
+                // Formatting
+                "editor.formatOnSave": true,
+                "editor.defaultFormatter": "ms-python.black-formatter",
+                "[python]": {
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.formatOnSave": true,
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit"
+                    }
+                },
+                "black-formatter.args": ["--line-length", "88"],
+                "isort.args": ["--profile", "black"],
+
+                // Linting
+                "python.analysis.typeCheckingMode": "basic",
+                "python.analysis.autoImportCompletions": true,
+
+                // Jupyter
+                "jupyter.askForKernelRestart": false,
+                "notebook.cellToolbarLocation": {
+                    "default": "right"
+                },
+
+                // Terminal
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "/bin/bash",
+                        "args": ["-l"]
+                    }
+                },
+
+                // Files
+                "files.autoSave": "afterDelay",
+                "files.autoSaveDelay": 1000,
+                "files.exclude": {
+                    "**/__pycache__": true,
+                    "**/*.pyc": true,
+                    "**/.pytest_cache": true,
+                    "**/.mypy_cache": true
+                },
+
+                // Editor
+                "editor.rulers": [88, 120],
+                "editor.tabSize": 4,
+                "editor.insertSpaces": true,
+                "editor.wordWrap": "on"
+            }
+        }
+    },
+
+    // Post-create commands
+    "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+    // User configuration
+    "remoteUser": "vscode",
+
+    // Features to install
+    "features": {
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": false,
+            "installOhMyZsh": false
+        }
+    }
+}

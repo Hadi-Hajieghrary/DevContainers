@@ -84,7 +84,7 @@ RUN pip install --upgrade pip setuptools wheel
 RUN pip install git+https://github.com/waymo-research/waymax.git
 
 # Install JAX CUDA support matching the jaxlib version installed by Waymax
-RUN pip install "jax[cuda12]" --find-links https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+RUN pip install "jaxlib[cuda12]==0.7.1" --find-links https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 # Install TensorFlow (required for Waymo Open Dataset)
 RUN pip install tensorflow==2.15.0

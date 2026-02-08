@@ -132,7 +132,7 @@
     },
 
     // Post-create commands
-    "postCreateCommand": "bash .devcontainer/post-create.sh",
+    "postCreateCommand": "bash DevContainers/.devcontainer/post-create.sh",
 
     // User configuration
     "remoteUser": "vscode",

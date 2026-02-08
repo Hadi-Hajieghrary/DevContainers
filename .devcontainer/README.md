@@ -6,15 +6,15 @@ This repository contains production-ready DevContainer configurations optimized 
 
 | Branch | Description | Simulation Framework |
 |--------|-------------|---------------------|
-| `main` | Waymax + SQP-Based Rulebook MPC | Waymax (Waymo) |
+| `WayMax` | Waymax + SQP-Based Rulebook MPC | Waymax (Waymo) |
 | `Mujoco` | Physics simulation with MuJoCo | MuJoCo 3.4.0 |
 | `Drake` | Robotics simulation with Drake | Drake (MIT) |
 
 ---
 
-## Waymax Branch (main) - SQP-Based Rulebook MPC Development
+## Waymax Branch (WayMax) - SQP-Based Rulebook MPC Development
 
-The `main` branch provides a comprehensive DevContainer for developing **Weighted SQP-Based Rulebook MPC** for autonomous vehicle planning using Waymax.
+The `WayMax` branch provides a comprehensive DevContainer for developing **Weighted SQP-Based Rulebook MPC** for autonomous vehicle planning using Waymax.
 
 ### Features
 

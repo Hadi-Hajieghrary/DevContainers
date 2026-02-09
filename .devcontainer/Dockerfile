@@ -37,6 +37,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     libxrender-dev \
     libfontconfig1 \
+    # Media processing
+    ffmpeg \
     # X11 for GUI applications
     x11-apps \
     xauth \
@@ -83,11 +85,16 @@ RUN pip install --upgrade pip setuptools wheel
 # Waymax is not on PyPI; install from GitHub
 RUN pip install git+https://github.com/waymo-research/waymax.git
 
-# Install JAX CUDA support matching the jaxlib version installed by Waymax
-RUN pip install "jaxlib[cuda12]==0.7.1" --find-links https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+# Install JAX with CUDA 12 support — brings in jax-cuda12-plugin, jax-cuda12-pjrt,
+# and nvidia-* packages (cublas, cudnn, cufft, cusolver, cusparse, nccl, nvjitlink)
+RUN pip install "jax[cuda12]==0.7.1"
 
 # Install TensorFlow (required for Waymo Open Dataset)
 RUN pip install tensorflow==2.15.0
+
+# Install Waymo Open Dataset (compatible workaround for TF 2.15 / Py 3.11)
+RUN pip install pyarrow==23.0.0 \
+    && pip install --no-deps waymo-open-dataset-tf-2-12-0
 
 # Copy and install requirements for SQP/MPC development
 COPY --chown=$USERNAME:$USERNAME requirements.txt /tmp/requirements.txt
@@ -99,8 +106,10 @@ ENV XLA_PYTHON_CLIENT_MEM_FRACTION=0.75
 
 # CUDA environment variables
 ENV CUDA_HOME=/usr/local/cuda
-ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 ENV PATH=$CUDA_HOME/bin:$PATH
+# Include pip-installed nvidia libraries so JAX can find cuSPARSE, cuBLAS, cuDNN, etc.
+ENV NVIDIA_SITE_PKGS=$VIRTUAL_ENV/lib/python3.11/site-packages/nvidia
+ENV LD_LIBRARY_PATH=$NVIDIA_SITE_PKGS/cublas/lib:$NVIDIA_SITE_PKGS/cuda_cupti/lib:$NVIDIA_SITE_PKGS/cuda_nvrtc/lib:$NVIDIA_SITE_PKGS/cuda_runtime/lib:$NVIDIA_SITE_PKGS/cudnn/lib:$NVIDIA_SITE_PKGS/cufft/lib:$NVIDIA_SITE_PKGS/cusolver/lib:$NVIDIA_SITE_PKGS/cusparse/lib:$NVIDIA_SITE_PKGS/nccl/lib:$NVIDIA_SITE_PKGS/nvjitlink/lib:$NVIDIA_SITE_PKGS/nvshmem/lib:$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
 # Configure matplotlib backend
 ENV MPLBACKEND=Agg

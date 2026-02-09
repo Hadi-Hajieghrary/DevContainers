@@ -16,6 +16,14 @@ fi
 # Activate virtual environment
 source /home/vscode/.venv/bin/activate
 
+# Set LD_LIBRARY_PATH for pip-installed nvidia CUDA libraries (needed by JAX GPU)
+NVIDIA_SITE_PKGS="/home/vscode/.venv/lib/python3.11/site-packages/nvidia"
+if [ -d "$NVIDIA_SITE_PKGS" ]; then
+    for lib_dir in cublas/lib cuda_cupti/lib cuda_nvrtc/lib cuda_runtime/lib cudnn/lib cufft/lib cusolver/lib cusparse/lib nccl/lib nvjitlink/lib nvshmem/lib; do
+        [ -d "$NVIDIA_SITE_PKGS/$lib_dir" ] && export LD_LIBRARY_PATH="$NVIDIA_SITE_PKGS/$lib_dir:${LD_LIBRARY_PATH:-}"
+    done
+fi
+
 # Ensure pip is up to date
 pip install --upgrade pip
 

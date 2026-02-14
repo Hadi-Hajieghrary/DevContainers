@@ -25,6 +25,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
     unzip \
+    # LaTeX toolchain (paper compilation)
+    latexmk \
+    texlive-latex-base \
+    texlive-latex-recommended \
+    texlive-latex-extra \
+    texlive-pictures \
+    texlive-science \
+    texlive-fonts-recommended \
+    texlive-extra-utils \
+    biber \
     # Scientific computing dependencies
     libopenblas-dev \
     liblapack-dev \

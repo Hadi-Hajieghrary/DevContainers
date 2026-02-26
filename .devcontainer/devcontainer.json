@@ -56,7 +56,8 @@
         "ms-vscode.cpptools",
         "ms-vscode.cmake-tools",
         "llvm-vs-code-extensions.vscode-clangd",
-        "twxs.cmake"
+        "twxs.cmake",
+        "James-Yu.latex-workshop"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python",

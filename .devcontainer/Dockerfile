@@ -66,6 +66,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libspdlog-dev \
     libopengl-dev \
     libmumps-seq-dev \
+    # Video encoding
+    ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------
+# LaTeX (TeX Live for IEEE papers)
+# -----------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    texlive-latex-base \
+    texlive-latex-recommended \
+    texlive-latex-extra \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    texlive-science \
+    texlive-bibtex-extra \
+    biber \
+    latexmk \
  && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
@@ -123,6 +140,8 @@ RUN python3 -m venv /home/${USERNAME}/.venv \
       numpy \
       scipy \
       matplotlib \
+      pandas \
+      Pillow \
       opencv-python \
       meshcat \
       pyvirtualdisplay \

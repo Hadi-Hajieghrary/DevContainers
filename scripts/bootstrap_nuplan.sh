@@ -294,24 +294,29 @@ if [[ "${PRINT_ONLY}" == "true" ]]; then
 fi
 
 if bool "${DOWNLOAD_MAPS:-false}"; then
-  fetch "${NUPLAN_MAPS_URL}" "${ARCHIVE_DIR}/nuplan-maps-v1.0.zip"
-  unzip_once "${ARCHIVE_DIR}/nuplan-maps-v1.0.zip" "${DATA_ROOT}" "${MAPS_ROOT}/nuplan-maps-v1.0.json"
+  if [[ -f "${MAPS_ROOT}/nuplan-maps-v1.0.json" && "${FORCE}" != "true" ]]; then
+    echo "[bootstrap] Already unpacked matching: ${MAPS_ROOT}/nuplan-maps-v1.0.json"
+  else
+    fetch "${NUPLAN_MAPS_URL}" "${ARCHIVE_DIR}/nuplan-maps-v1.0.zip"
+    unzip_once "${ARCHIVE_DIR}/nuplan-maps-v1.0.zip" "${DATA_ROOT}" "${MAPS_ROOT}/nuplan-maps-v1.0.json"
+  fi
 else
   echo "[bootstrap] Skipping maps by profile."
 fi
 
 if bool "${DOWNLOAD_MINI_DB:-false}"; then
-  fetch "${NUPLAN_MINI_DB_URL}" "${ARCHIVE_DIR}/nuplan-v1.1_mini.zip"
   normalize_mini_dir
-  if compgen -G "${MINI_DIR}/*.db" >/dev/null; then
+  if compgen -G "${MINI_DIR}/*.db" >/dev/null && [[ "${FORCE}" != "true" ]]; then
     if mini_dbs_are_valid "${MINI_DIR}"; then
       echo "[bootstrap] Already unpacked matching: ${MINI_DIR}/*.db"
     else
       echo "[bootstrap] Re-unpacking mini DB archive because corrupted DB files were detected."
+      fetch "${NUPLAN_MINI_DB_URL}" "${ARCHIVE_DIR}/nuplan-v1.1_mini.zip"
       unzip_once "${ARCHIVE_DIR}/nuplan-v1.1_mini.zip" "${DATA_ROOT}" "${MINI_DIR}/*.db"
       normalize_mini_dir
     fi
   else
+    fetch "${NUPLAN_MINI_DB_URL}" "${ARCHIVE_DIR}/nuplan-v1.1_mini.zip"
     unzip_once "${ARCHIVE_DIR}/nuplan-v1.1_mini.zip" "${DATA_ROOT}" "${MINI_DIR}/*.db"
     normalize_mini_dir
   fi
@@ -323,15 +328,23 @@ else
 fi
 
 if bool "${DOWNLOAD_MINI_CAMERA:-false}"; then
-  fetch "${NUPLAN_MINI_CAMERA_0_URL}" "${ARCHIVE_DIR}/nuplan-v1.1_mini_camera_0.zip"
-  unzip_once "${ARCHIVE_DIR}/nuplan-v1.1_mini_camera_0.zip" "${DATA_ROOT}" "${SENSOR_DIR}/*/CAM_*"
+  if compgen -G "${SENSOR_DIR}/*/CAM_*" >/dev/null && [[ "${FORCE}" != "true" ]]; then
+    echo "[bootstrap] Already unpacked matching: ${SENSOR_DIR}/*/CAM_*"
+  else
+    fetch "${NUPLAN_MINI_CAMERA_0_URL}" "${ARCHIVE_DIR}/nuplan-v1.1_mini_camera_0.zip"
+    unzip_once "${ARCHIVE_DIR}/nuplan-v1.1_mini_camera_0.zip" "${DATA_ROOT}" "${SENSOR_DIR}/*/CAM_*"
+  fi
 else
   echo "[bootstrap] Skipping mini camera blobs by profile."
 fi
 
 if bool "${DOWNLOAD_MINI_LIDAR:-false}"; then
-  fetch "${NUPLAN_MINI_LIDAR_0_URL}" "${ARCHIVE_DIR}/nuplan-v1.1_mini_lidar_0.zip"
-  unzip_once "${ARCHIVE_DIR}/nuplan-v1.1_mini_lidar_0.zip" "${DATA_ROOT}" "${SENSOR_DIR}/*/MergedPointCloud/*"
+  if compgen -G "${SENSOR_DIR}/*/MergedPointCloud/*" >/dev/null && [[ "${FORCE}" != "true" ]]; then
+    echo "[bootstrap] Already unpacked matching: ${SENSOR_DIR}/*/MergedPointCloud/*"
+  else
+    fetch "${NUPLAN_MINI_LIDAR_0_URL}" "${ARCHIVE_DIR}/nuplan-v1.1_mini_lidar_0.zip"
+    unzip_once "${ARCHIVE_DIR}/nuplan-v1.1_mini_lidar_0.zip" "${DATA_ROOT}" "${SENSOR_DIR}/*/MergedPointCloud/*"
+  fi
 else
   echo "[bootstrap] Skipping mini LiDAR blobs by profile."
 fi

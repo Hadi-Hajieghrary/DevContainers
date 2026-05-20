@@ -5,7 +5,7 @@
     "workspaceFolder": "/workspace/nuplan-project",
     "remoteUser": "vscode",
     "shutdownAction": "stopCompose",
-    "postCreateCommand": "sudo chown -R vscode:vscode /workspace/data /workspace/exp /workspace/nuplan-project && if [ \"${NUPLAN_BOOTSTRAP_ON_CREATE:-true}\" = \"true\" ]; then bash /workspace/nuplan-project/scripts/bootstrap_nuplan.sh --profile \"${NUPLAN_DATA_PROFILE:-planner_mini}\"; else echo 'nuPlan bootstrap disabled by NUPLAN_BOOTSTRAP_ON_CREATE=false'; fi",
+    "postCreateCommand": "sudo chown -R vscode:vscode /workspace/data /workspace/exp /workspace/nuplan-project && if [ \"${NUPLAN_BOOTSTRAP_ON_CREATE:-true}\" = \"true\" ]; then bash /workspace/nuplan-project/DevContainers/scripts/bootstrap_nuplan.sh --profile \"${NUPLAN_DATA_PROFILE:-planner_mini}\"; else echo 'nuPlan bootstrap disabled by NUPLAN_BOOTSTRAP_ON_CREATE=false'; fi",
     "customizations": {
         "vscode": {
             "extensions": [

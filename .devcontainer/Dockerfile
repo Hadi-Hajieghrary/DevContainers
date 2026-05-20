@@ -1,134 +1,62 @@
-# Waymax + SQP-Based Rulebook MPC Development Container
-# Base: NVIDIA CUDA 12.4.1 + Ubuntu 22.04
-# Python: 3.11 with JAX GPU support
+FROM python:3.9-bullseye
 
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+ARG DEBIAN_FRONTEND=noninteractive
+ARG NUPLAN_DEVKIT_REPO=https://github.com/motional/nuplan-devkit.git
+ARG NUPLAN_DEVKIT_REF=master
 
-# Prevent interactive prompts during package installation
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
+ENV SHELL=/bin/bash \
+    VIRTUAL_ENV=/home/vscode/.venv \
+    PATH=/home/vscode/.venv/bin:$PATH \
+    NUPLAN_DEVKIT_ROOT=/workspace/nuplan-devkit \
+    NUPLAN_DATA_ROOT=/workspace/data \
+    NUPLAN_MAPS_ROOT=/workspace/data/maps \
+    NUPLAN_EXP_ROOT=/workspace/exp \
+    MPLBACKEND=Agg \
+    PYTHONUNBUFFERED=1
 
-# System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Python and build tools
-    python3.11 \
-    python3.11-venv \
-    python3.11-dev \
-    python3-pip \
-    build-essential \
-    cmake \
-    ninja-build \
-    pkg-config \
-    # Git and development tools
-    git \
-    git-lfs \
-    curl \
-    wget \
-    unzip \
-    # LaTeX toolchain (paper compilation)
-    latexmk \
-    texlive-latex-base \
-    texlive-latex-recommended \
-    texlive-latex-extra \
-    texlive-pictures \
-    texlive-science \
-    texlive-fonts-recommended \
-    texlive-extra-utils \
-    biber \
-    # Scientific computing dependencies
-    libopenblas-dev \
-    liblapack-dev \
-    libeigen3-dev \
-    libsuitesparse-dev \
-    # Visualization dependencies
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libfontconfig1 \
-    # Media processing
-    ffmpeg \
-    # X11 for GUI applications
-    x11-apps \
-    xauth \
-    # Utilities
-    htop \
-    vim \
-    nano \
-    tmux \
-    tree \
-    # Clean up
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# Set Python 3.11 as default
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
-
-# Create non-root user for development
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && apt-get update \
-    && apt-get install -y sudo \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME \
+    bash build-essential ca-certificates curl git git-lfs wget unzip rsync \
+    ffmpeg libsm6 libxext6 libgl1 libglib2.0-0 libgeos-dev libspatialindex-dev \
+    libsqlite3-dev sqlite3 graphviz vim nano htop tmux jq sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# Switch to non-root user
-USER $USERNAME
-WORKDIR /home/$USERNAME
+RUN useradd -m -s /bin/bash vscode && echo "vscode ALL=(ALL) NOPASSWD:ALL" >/etc/sudoers.d/vscode
 
-# Create virtual environment
-ENV VIRTUAL_ENV=/home/$USERNAME/.venv
-RUN python -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN python -m venv ${VIRTUAL_ENV} \
+    && ${VIRTUAL_ENV}/bin/python -m pip install --upgrade 'pip<24.1' setuptools wheel
 
-# Upgrade pip and install build tools
-RUN pip install --upgrade pip setuptools wheel
+RUN mkdir -p /workspace ${NUPLAN_DATA_ROOT} ${NUPLAN_EXP_ROOT} /workspace/nuplan-project \
+    && chown -R vscode:vscode /workspace ${VIRTUAL_ENV}
 
-# Install Waymax first — it pins compatible JAX, jaxlib, and waymo-open-dataset versions
-# Waymax is not on PyPI; install from GitHub
-RUN pip install git+https://github.com/waymo-research/waymax.git
+USER vscode
+WORKDIR /workspace
 
-# Install JAX with CUDA 12 support — brings in jax-cuda12-plugin, jax-cuda12-pjrt,
-# and nvidia-* packages (cublas, cudnn, cufft, cusolver, cusparse, nccl, nvjitlink)
-RUN pip install "jax[cuda12]==0.7.1"
+RUN git clone ${NUPLAN_DEVKIT_REPO} ${NUPLAN_DEVKIT_ROOT} \
+    && cd ${NUPLAN_DEVKIT_ROOT} \
+    && git checkout ${NUPLAN_DEVKIT_REF}
 
-# Install TensorFlow (required for Waymo Open Dataset)
-RUN pip install tensorflow==2.15.0
+RUN bash -lc "source ${VIRTUAL_ENV}/bin/activate && \
+    cd ${NUPLAN_DEVKIT_ROOT} && \
+    python -m pip install --upgrade 'pip<24.1' setuptools wheel && \
+    if [ -f requirements_torch.txt ]; then \
+        grep -Ev '^(--find-links|torch==|torchvision==|torch_scatter==)' requirements_torch.txt > /tmp/requirements_torch.filtered.txt && \
+        pip install \
+            'https://download.pytorch.org/whl/cu111/torch-1.9.0%2Bcu111-cp39-cp39-linux_x86_64.whl' \
+            'https://download.pytorch.org/whl/cu111/torchvision-0.10.0%2Bcu111-cp39-cp39-linux_x86_64.whl' \
+            'https://data.pyg.org/whl/torch-1.9.0%2Bcu111/torch_scatter-2.0.9-cp39-cp39-linux_x86_64.whl' && \
+        pip install -r /tmp/requirements_torch.filtered.txt; \
+    fi && \
+    if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && \
+    pip install -e . && \
+    pip install jupyterlab ipykernel notebook ipywidgets pandas matplotlib scipy scikit-learn tqdm rich ruff black pytest && \
+    python -m ipykernel install --user --name nuplan --display-name 'Python (nuPlan)'"
 
-# Install Waymo Open Dataset (compatible workaround for TF 2.15 / Py 3.11)
-RUN pip install pyarrow==23.0.0 \
-    && pip install --no-deps waymo-open-dataset-tf-2-12-0
+RUN echo 'source /home/vscode/.venv/bin/activate' >> /home/vscode/.bashrc \
+    && echo 'export NUPLAN_DATA_ROOT=/workspace/data' >> /home/vscode/.bashrc \
+    && echo 'export NUPLAN_MAPS_ROOT=/workspace/data/maps' >> /home/vscode/.bashrc \
+    && echo 'export NUPLAN_EXP_ROOT=/workspace/exp' >> /home/vscode/.bashrc \
+    && echo 'export NUPLAN_DEVKIT_ROOT=/workspace/nuplan-devkit' >> /home/vscode/.bashrc \
+    && echo 'alias cdnuplan="cd /workspace/nuplan-devkit"' >> /home/vscode/.bashrc \
+    && echo 'alias cdproj="cd /workspace/nuplan-project"' >> /home/vscode/.bashrc
 
-# Copy and install requirements for SQP/MPC development
-COPY --chown=$USERNAME:$USERNAME requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt
-
-# Set up JAX to use GPU by default
-ENV XLA_PYTHON_CLIENT_PREALLOCATE=false
-ENV XLA_PYTHON_CLIENT_MEM_FRACTION=0.75
-
-# CUDA environment variables
-ENV CUDA_HOME=/usr/local/cuda
-ENV PATH=$CUDA_HOME/bin:$PATH
-# Include pip-installed nvidia libraries so JAX can find cuSPARSE, cuBLAS, cuDNN, etc.
-ENV NVIDIA_SITE_PKGS=$VIRTUAL_ENV/lib/python3.11/site-packages/nvidia
-ENV LD_LIBRARY_PATH=$NVIDIA_SITE_PKGS/cublas/lib:$NVIDIA_SITE_PKGS/cuda_cupti/lib:$NVIDIA_SITE_PKGS/cuda_nvrtc/lib:$NVIDIA_SITE_PKGS/cuda_runtime/lib:$NVIDIA_SITE_PKGS/cudnn/lib:$NVIDIA_SITE_PKGS/cufft/lib:$NVIDIA_SITE_PKGS/cusolver/lib:$NVIDIA_SITE_PKGS/cusparse/lib:$NVIDIA_SITE_PKGS/nccl/lib:$NVIDIA_SITE_PKGS/nvjitlink/lib:$NVIDIA_SITE_PKGS/nvshmem/lib:$CUDA_HOME/lib64:$LD_LIBRARY_PATH
-
-# Configure matplotlib backend
-ENV MPLBACKEND=Agg
-
-# Set working directory
-WORKDIR /workspaces
-
-# Activate venv in bashrc
-RUN echo "source $VIRTUAL_ENV/bin/activate" >> ~/.bashrc
-
-# Default command
-CMD ["/bin/bash"]
+WORKDIR /workspace/nuplan-project

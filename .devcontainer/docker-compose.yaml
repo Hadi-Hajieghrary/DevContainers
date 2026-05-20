@@ -1,0 +1,28 @@
+services:
+  nuplan:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      args:
+        NUPLAN_DEVKIT_REPO: https://github.com/motional/nuplan-devkit.git
+        NUPLAN_DEVKIT_REF: master
+    shm_size: 16gb
+    ipc: host
+    environment:
+      NUPLAN_DATA_ROOT: /workspace/data
+      NUPLAN_MAPS_ROOT: /workspace/data/maps
+      NUPLAN_EXP_ROOT: /workspace/exp
+      NUPLAN_DEVKIT_ROOT: /workspace/nuplan-devkit
+      NUPLAN_DATA_PROFILE: planner_mini
+      NUPLAN_BOOTSTRAP_ON_CREATE: "true"
+    volumes:
+      - ..:/workspace/nuplan-project
+      - ../data:/workspace/data
+      - ../exp:/workspace/exp
+    working_dir: /workspace/nuplan-project
+    ports:
+      - "8888:8888"
+      - "5006:5006"
+    command: bash
+    stdin_open: true
+    tty: true
